@@ -1,0 +1,16 @@
+# Core deep-learning stack
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Explainability (Grad-CAM / Grad-CAM++)
+grad-cam>=1.4.8
+
+# Metrics & statistics
+scikit-image>=0.21.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# Data handling & plotting
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
