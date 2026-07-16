@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Project-specific ---
+# Datasets (do NOT commit - download/copy locally)
+/data/
+/tiny-imagenet-200/
+
+# Run log & scratch
+outputs_run.log
+_summary_tmp.py
+summary_out.txt
+check.txt
