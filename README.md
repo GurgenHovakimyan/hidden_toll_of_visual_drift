@@ -7,9 +7,11 @@ CNN architectures and two datasets.
 
 For every combination of *dataset × model × drift type × drift intensity × XAI
 method*, the pipeline measures the drop in accuracy, the similarity between clean
-and drifted heatmaps (SSIM, IoU, MSE), and the statistical divergence of the
-heatmap distributions (Kolmogorov–Smirnov, Anderson–Darling, Welch's *t*-test,
-Wilcoxon rank-sum).
+and drifted heatmaps (SSIM, IoU at multiple thresholds, Pearson/cosine, MSE), and
+assesses significance with an image-level **paired** analysis (Wilcoxon
+signed-rank and paired *t*-test, with Cohen's *d* effect sizes and bootstrap 95%
+CIs), complemented by pixel-level distributional diagnostics (Kolmogorov–Smirnov,
+Anderson–Darling, Welch's *t*-test, Wilcoxon rank-sum).
 
 ---
 
@@ -30,10 +32,10 @@ Wilcoxon rank-sum).
 hidden_toll_of_visual_drift/
 ├── config.py          # Centralised constants: datasets, models, drift grid, training, paths
 ├── data_loader.py     # Single factory: standardized loaders for CIFAR-10 / Tiny ImageNet (no augmentation)
-├── models.py          # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + Grad-CAM target layers
+├── models.py          # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + penultimate-block Grad-CAM target layers
 ├── drift_utils.py     # Unified apply_drift(): noise / blur / brightness / rotation on tensor batches
 ├── xai_utils.py       # generate_heatmaps(): Grad-CAM & Grad-CAM++ for the predicted class
-├── metrics.py         # Accuracy, SSIM/IoU/MSE, and KS/AD/Welch/Wilcoxon statistical tests
+├── metrics.py         # Accuracy, SSIM/IoU/MSE/Pearson/cosine, image-level paired tests, effect sizes, bootstrap CIs, KS/AD/Welch/Wilcoxon
 ├── trainer.py         # Training loop w/ early stopping + best-epoch checkpoint + learning-curve plots
 ├── evaluator.py       # Unified drift-sweep evaluation loop (the heart of the study)
 ├── main.py            # Orchestrator: nested dataset × model sweep, resumable, writes master CSV
@@ -57,12 +59,12 @@ drift types without duplicating logic.
 | **Backbones** | ImageNet-pretrained; classification head re-initialised per dataset |
 | **Normalisation** | mean = std = 0.5 per channel, **no data augmentation** (pure baseline) |
 | **Optimiser** | Adam, lr = 1e-3, batch size = 128 |
-| **Training** | up to 30 epochs, **early stopping** (patience 7 on val-loss), **best epoch** checkpointed |
+| **Training** | up to 30 epochs, early stopping (patience 7 on val-loss), **best epoch** checkpointed |
 | **Drift types** | `noise` (additive Gaussian) · `blur` (Gaussian) · `brightness` (ColorJitter) · `rotation` (≤ 45°) |
 | **Drift grid** | 12 intensities: 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5 |
-| **XAI** | Grad-CAM and Grad-CAM++ on the last convolutional block |
-| **Heatmap similarity** | SSIM, IoU (binary @ 0.5), MSE |
-| **Statistical tests** | KS (`ks_2samp`), Anderson–Darling (`anderson_ksamp`), Welch's *t* (`ttest_ind`, unequal var), Wilcoxon rank-sum (`ranksums`) |
+| **XAI** | Grad-CAM and Grad-CAM++ on the **penultimate** convolutional block (predicted class) |
+| **Heatmap similarity** | SSIM · IoU (thresholds 0.3/0.5/0.7) · Pearson · cosine · MSE |
+| **Statistical analysis** | Image-level **paired** Wilcoxon signed-rank & paired *t* with Cohen's *d* and bootstrap 95% CIs (primary); pixel-level KS/AD/Welch/Wilcoxon rank-sum diagnostics (supplementary) |
 
 ---
 
