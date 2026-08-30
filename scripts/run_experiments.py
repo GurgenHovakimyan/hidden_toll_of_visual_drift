@@ -25,15 +25,19 @@ from __future__ import annotations
 
 import glob
 import os
+import sys
+
+# Make the repository root importable when run as `python scripts/run_experiments.py`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import torch
 
-import config
-from data_loader import get_dataloaders
-from evaluator import evaluate_concept_drift
-from models import get_model
-from trainer import plot_learning_curves, train_model
+from drift_study import config
+from drift_study.data_loader import get_dataloaders
+from drift_study.evaluator import evaluate_concept_drift
+from drift_study.models import get_model
+from drift_study.trainer import plot_learning_curves, train_model
 
 
 def run_pipeline(cfg: config._Config = config.CONFIG) -> pd.DataFrame:

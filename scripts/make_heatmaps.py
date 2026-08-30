@@ -9,6 +9,10 @@ existing (ImageNet-pretrained) checkpoints on CIFAR-10.
 from __future__ import annotations
 
 import os
+import sys
+
+# Make the repository root importable when run as `python scripts/make_heatmaps.py`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib
 
@@ -17,11 +21,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-import config
-from data_loader import get_dataloaders
-from drift_utils import apply_drift
-from models import get_model, get_target_layers
-from xai_utils import generate_heatmaps
+from drift_study import config
+from drift_study.data_loader import get_dataloaders
+from drift_study.drift_utils import apply_drift
+from drift_study.models import get_model, get_target_layers
+from drift_study.xai_utils import generate_heatmaps
 
 # (panel title, split, (drift_type, intensity) or None)
 CONDITIONS = [
