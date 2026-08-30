@@ -227,6 +227,7 @@ outputs_run.log
 _summary_tmp.py
 summary_out.txt
 check.txt
+outputs/results/_backup_broken/
 
 # Manuscript artifacts (kept locally, not on GitHub)
 *.tex
