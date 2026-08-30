@@ -24,7 +24,7 @@ from typing import Callable, Dict
 import torch
 import torchvision.transforms.functional as TF
 
-import config
+from . import config
 
 # Valid range of a normalized tensor (mean = std = 0.5  ->  [-1, 1]).
 _VMIN, _VMAX = -1.0, 1.0

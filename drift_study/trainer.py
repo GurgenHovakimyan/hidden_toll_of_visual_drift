@@ -27,7 +27,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-import config
+from . import config
 
 
 def _run_epoch(

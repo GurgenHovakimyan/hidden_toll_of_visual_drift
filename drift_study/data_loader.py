@@ -20,7 +20,7 @@ from typing import Tuple
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-import config
+from . import config
 
 
 def _build_transform(image_size: int) -> transforms.Compose:

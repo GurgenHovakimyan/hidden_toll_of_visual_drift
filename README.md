@@ -7,9 +7,11 @@ CNN architectures and two datasets.
 
 For every combination of *dataset × model × drift type × drift intensity × XAI
 method*, the pipeline measures the drop in accuracy, the similarity between clean
-and drifted heatmaps (SSIM, IoU, MSE), and the statistical divergence of the
-heatmap distributions (Kolmogorov–Smirnov, Anderson–Darling, Welch's *t*-test,
-Wilcoxon rank-sum).
+and drifted heatmaps (SSIM, IoU at multiple thresholds, Pearson/cosine, MSE), and
+assesses significance with an image-level **paired** analysis (Wilcoxon
+signed-rank and paired *t*-test, with Cohen's *d* effect sizes and bootstrap 95%
+CIs), complemented by pixel-level distributional diagnostics (Kolmogorov–Smirnov,
+Anderson–Darling, Welch's *t*-test, Wilcoxon rank-sum).
 
 ---
 
@@ -28,23 +30,29 @@ Wilcoxon rank-sum).
 
 ```
 hidden_toll_of_visual_drift/
-├── config.py          # Centralised constants: datasets, models, drift grid, training, paths
-├── data_loader.py     # Single factory: standardized loaders for CIFAR-10 / Tiny ImageNet (no augmentation)
-├── models.py          # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + Grad-CAM target layers
-├── drift_utils.py     # Unified apply_drift(): noise / blur / brightness / rotation on tensor batches
-├── xai_utils.py       # generate_heatmaps(): Grad-CAM & Grad-CAM++ for the predicted class
-├── metrics.py         # Accuracy, SSIM/IoU/MSE, and KS/AD/Welch/Wilcoxon statistical tests
-├── trainer.py         # Training loop w/ early stopping + best-epoch checkpoint + learning-curve plots
-├── evaluator.py       # Unified drift-sweep evaluation loop (the heart of the study)
-├── main.py            # Orchestrator: nested dataset × model sweep, resumable, writes master CSV
-├── run_pipeline.ps1   # One-command launcher (fresh run or resume)
-├── requirements.txt   # Python dependencies
-└── outputs/           # Generated artefacts (checkpoints, learning_curves, results)
+├── drift_study/              # Library package (importable code)
+│   ├── config.py            # Centralised constants: datasets, models, drift grid, training, paths
+│   ├── data_loader.py       # Standardized loaders for CIFAR-10 / Tiny ImageNet (no augmentation)
+│   ├── models.py            # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + penultimate-block Grad-CAM target layers
+│   ├── drift_utils.py       # Unified apply_drift(): noise / blur / brightness / rotation on tensor batches
+│   ├── xai_utils.py         # generate_heatmaps(): Grad-CAM & Grad-CAM++ for the predicted class
+│   ├── metrics.py           # Accuracy, SSIM/IoU/MSE/Pearson/cosine, image-level paired tests, effect sizes, bootstrap CIs, KS/AD/Welch/Wilcoxon
+│   ├── trainer.py           # Training loop w/ early stopping + best-epoch checkpoint + learning-curve plots
+│   └── evaluator.py         # Unified drift-sweep evaluation loop (the heart of the study)
+├── scripts/                  # Runnable entry points (run from the repo root)
+│   ├── run_experiments.py   # Orchestrator: nested dataset × model sweep, resumable, writes master CSV
+│   ├── make_heatmaps.py     # Regenerate the class-averaged Grad-CAM figures
+│   ├── generate_supplementary.py  # Render the supplementary LaTeX tables from the master CSV
+│   ├── profile_efficiency.py      # Profile runtime / peak GPU per model-dataset
+│   └── run_pipeline.ps1     # One-command launcher (fresh run or resume)
+├── requirements.txt          # Python dependencies
+└── outputs/                  # Generated artefacts (checkpoints, learning_curves, results)
 ```
 
 The codebase follows a strict **DRY** design: every constant lives in
-`config.py`, and a single evaluation loop iterates over all models, datasets and
-drift types without duplicating logic.
+`drift_study/config.py`, and a single evaluation loop iterates over all models,
+datasets and drift types without duplicating logic. All scripts are launched
+from the repository root (e.g. `python scripts/run_experiments.py`).
 
 ---
 
@@ -57,12 +65,12 @@ drift types without duplicating logic.
 | **Backbones** | ImageNet-pretrained; classification head re-initialised per dataset |
 | **Normalisation** | mean = std = 0.5 per channel, **no data augmentation** (pure baseline) |
 | **Optimiser** | Adam, lr = 1e-3, batch size = 128 |
-| **Training** | up to 30 epochs, **early stopping** (patience 7 on val-loss), **best epoch** checkpointed |
+| **Training** | up to 30 epochs, early stopping (patience 7 on val-loss), **best epoch** checkpointed |
 | **Drift types** | `noise` (additive Gaussian) · `blur` (Gaussian) · `brightness` (ColorJitter) · `rotation` (≤ 45°) |
 | **Drift grid** | 12 intensities: 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5 |
-| **XAI** | Grad-CAM and Grad-CAM++ on the last convolutional block |
-| **Heatmap similarity** | SSIM, IoU (binary @ 0.5), MSE |
-| **Statistical tests** | KS (`ks_2samp`), Anderson–Darling (`anderson_ksamp`), Welch's *t* (`ttest_ind`, unequal var), Wilcoxon rank-sum (`ranksums`) |
+| **XAI** | Grad-CAM and Grad-CAM++ on the **penultimate** convolutional block (predicted class) |
+| **Heatmap similarity** | SSIM · IoU (thresholds 0.3/0.5/0.7) · Pearson · cosine · MSE |
+| **Statistical analysis** | Image-level **paired** Wilcoxon signed-rank & paired *t* with Cohen's *d* and bootstrap 95% CIs (primary); pixel-level KS/AD/Welch/Wilcoxon rank-sum diagnostics (supplementary) |
 
 ---
 
@@ -82,16 +90,16 @@ pip install -r requirements.txt
 
 ```powershell
 # Fresh run — clears ./outputs and trains + evaluates all 6 models:
-.\run_pipeline.ps1 -Fresh
+.\scripts\run_pipeline.ps1 -Fresh
 
 # Resume after an interruption (skips finished models, reuses checkpoints):
-.\run_pipeline.ps1
+.\scripts\run_pipeline.ps1
 ```
 
-Or directly:
+Or directly (from the repository root):
 
 ```powershell
-python main.py
+python scripts/run_experiments.py
 ```
 
 The run is **resumable**: each model's results are written to
