@@ -5,14 +5,18 @@ per model-dataset, using the existing checkpoints. Writes a LaTeX-ready table.
 from __future__ import annotations
 
 import os
+import sys
 import time
+
+# Make the repository root importable when run as `python scripts/profile_efficiency.py`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 
-import config
-from data_loader import get_dataloaders
-from evaluator import evaluate_concept_drift
-from models import get_model
+from drift_study import config
+from drift_study.data_loader import get_dataloaders
+from drift_study.evaluator import evaluate_concept_drift
+from drift_study.models import get_model
 
 try:
     import psutil

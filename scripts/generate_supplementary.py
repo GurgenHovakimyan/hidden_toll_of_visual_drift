@@ -2,7 +2,7 @@
 generate_supplementary.py
 =========================
 Render the reviewer-requested supplementary LaTeX tables directly from
-``outputs/results/master_drift_results.csv`` (produced by ``main.py``).
+``outputs/results/master_drift_results.csv`` (produced by ``scripts/run_experiments.py``).
 
 It emits ``supplementary_tables.tex`` containing, for every dataset/model:
 
@@ -16,7 +16,7 @@ It emits ``supplementary_tables.tex`` containing, for every dataset/model:
 The script degrades gracefully: any column that is absent in the CSV is simply
 skipped, so it works with both the legacy and the enhanced result schema.
 
-Usage:  python generate_supplementary.py
+Usage:  python scripts/generate_supplementary.py
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ def iou_threshold_table(df: pd.DataFrame) -> str:
 def main() -> None:
     if not os.path.exists(RESULTS_CSV):
         raise SystemExit(
-            f"Results file not found: {RESULTS_CSV}. Run main.py first."
+            f"Results file not found: {RESULTS_CSV}. Run scripts/run_experiments.py first."
         )
     df = pd.read_csv(RESULTS_CSV)
 
