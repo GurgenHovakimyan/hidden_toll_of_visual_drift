@@ -40,7 +40,7 @@ from scipy.stats import (
 )
 from skimage.metrics import structural_similarity as ssim
 
-import config
+from . import config
 
 # Thresholds used for the IoU threshold-sensitivity analysis (reviewer R1).
 IOU_THRESHOLDS: Sequence[float] = (0.3, 0.5, 0.7)

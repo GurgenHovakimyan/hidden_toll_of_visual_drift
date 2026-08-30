@@ -27,11 +27,11 @@ import torch
 from scipy.stats import wilcoxon
 from torch.utils.data import DataLoader
 
-import config
-import metrics
-from drift_utils import apply_drift
-from models import get_target_layers
-from xai_utils import generate_heatmaps
+from . import config
+from . import metrics
+from .drift_utils import apply_drift
+from .models import get_target_layers
+from .xai_utils import generate_heatmaps
 
 
 def _collect_subset(loader: DataLoader, num_batches: int, device: torch.device):
