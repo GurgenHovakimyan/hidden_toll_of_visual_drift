@@ -7,9 +7,10 @@ Model factory for the three CNN architectures compared in the study:
     * DenseNet-121
     * ShuffleNet V2 (x1.0)
 
-All networks are instantiated **from scratch** (``weights=None``) and their
-classification head is resized dynamically to the number of classes of the
-active dataset (10 for CIFAR-10, 200 for Tiny ImageNet).
+All networks are instantiated from ImageNet-pretrained backbones
+(``config.PRETRAINED``), and their classification head is resized dynamically to
+the number of classes of the active dataset (10 for CIFAR-10, 200 for Tiny
+ImageNet).
 
 The module also exposes :func:`get_target_layers`, the single source of truth
 for which convolutional layer Grad-CAM / Grad-CAM++ should hook into for each
@@ -90,8 +91,11 @@ def get_model(
 def get_target_layers(model: nn.Module, name: str) -> List[nn.Module]:
     """Return the layer(s) Grad-CAM should target for a given architecture.
 
-    The last spatial convolutional block is used for every network, which is
-    the standard choice for CAM-based explanations.
+    We hook the **penultimate** convolutional stage rather than the final one.
+    On low-resolution inputs (32x32 CIFAR-10, 64x64 Tiny ImageNet) the last
+    stage collapses to a 1x1 spatial map, which makes Grad-CAM degenerate
+    (all-zero heatmaps). The penultimate stage retains a 2x2-4x4 map and yields
+    informative saliency, matching the original study's ``layer3`` choice.
 
     Parameters
     ----------
@@ -108,13 +112,13 @@ def get_target_layers(model: nn.Module, name: str) -> List[nn.Module]:
     key = name.lower()
 
     if key == "resnet18":
-        return [model.layer4[-1]]
+        return [model.layer3[-1]]
 
     if key == "densenet121":
-        return [model.features.denseblock4]
+        return [model.features.denseblock3]
 
     if key == "shufflenet_v2":
-        return [model.conv5[-1]]
+        return [model.stage3[-1]]
 
     raise ValueError(
         f"Unsupported model '{name}'. Choose one of {list(_SUPPORTED)}."
