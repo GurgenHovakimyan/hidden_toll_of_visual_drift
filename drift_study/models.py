@@ -32,7 +32,7 @@ from torchvision.models import (
     shufflenet_v2_x1_0,
 )
 
-import config
+from . import config
 
 # Canonical model keys (kept in sync with config.MODELS).
 _SUPPORTED = ("resnet18", "densenet121", "shufflenet_v2")
