@@ -6,10 +6,10 @@
     USAGE (from any location):
 
       # Morning fresh start (clears old outputs, then runs everything):
-      .\run_pipeline.ps1 -Fresh
+      .\scripts\run_pipeline.ps1 -Fresh
 
       # Resume after an interruption / shutdown (keeps finished work):
-      .\run_pipeline.ps1
+      .\scripts\run_pipeline.ps1
 
     What it does
     ------------
@@ -17,7 +17,7 @@
     * -Fresh  : deletes ./outputs and the old log so the run starts clean
                 (use this once in the morning since the training settings
                 changed to 30 epochs + best-epoch checkpointing).
-    * default : leaves ./outputs in place so main.py RESUMES — it skips any
+    * default : leaves ./outputs in place so run_experiments.py RESUMES — it skips any
                 model whose results are already saved and reuses checkpoints.
     * Streams all output to .\outputs_run.log (and the console).
 
@@ -35,8 +35,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Move to the folder this script lives in.
-Set-Location -Path $PSScriptRoot
+# Move to the repository root (this script lives in scripts/).
+Set-Location -Path (Split-Path -Parent $PSScriptRoot)
 
 # Stop any stray python processes from a previous run.
 Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -50,7 +50,7 @@ else {
     Write-Host "[run_pipeline] Resume mode: keeping existing outputs." -ForegroundColor Cyan
 }
 
-Write-Host "[run_pipeline] Launching main.py in conda env 'sadr'..." -ForegroundColor Green
-conda run -n sadr --no-capture-output python -u main.py *> ".\outputs_run.log"
+Write-Host "[run_pipeline] Launching scripts/run_experiments.py in conda env 'sadr'..." -ForegroundColor Green
+conda run -n sadr --no-capture-output python -u scripts/run_experiments.py *> ".\outputs_run.log"
 
 Write-Host "[run_pipeline] Finished. See .\outputs_run.log and .\outputs\results\master_drift_results.csv" -ForegroundColor Green
