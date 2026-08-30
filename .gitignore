@@ -235,8 +235,4 @@ check.txt
 *.zip
 CHANGES_ROUND3.txt
 Response*Letter*.txt
-Class*Heatmap.png
 Overleaf Projects*/
-
-# Generated data & experiment outputs (kept locally, not on GitHub)
-/outputs/
