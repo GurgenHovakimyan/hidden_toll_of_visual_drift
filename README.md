@@ -30,23 +30,29 @@ Anderson–Darling, Welch's *t*-test, Wilcoxon rank-sum).
 
 ```
 hidden_toll_of_visual_drift/
-├── config.py          # Centralised constants: datasets, models, drift grid, training, paths
-├── data_loader.py     # Single factory: standardized loaders for CIFAR-10 / Tiny ImageNet (no augmentation)
-├── models.py          # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + penultimate-block Grad-CAM target layers
-├── drift_utils.py     # Unified apply_drift(): noise / blur / brightness / rotation on tensor batches
-├── xai_utils.py       # generate_heatmaps(): Grad-CAM & Grad-CAM++ for the predicted class
-├── metrics.py         # Accuracy, SSIM/IoU/MSE/Pearson/cosine, image-level paired tests, effect sizes, bootstrap CIs, KS/AD/Welch/Wilcoxon
-├── trainer.py         # Training loop w/ early stopping + best-epoch checkpoint + learning-curve plots
-├── evaluator.py       # Unified drift-sweep evaluation loop (the heart of the study)
-├── main.py            # Orchestrator: nested dataset × model sweep, resumable, writes master CSV
-├── run_pipeline.ps1   # One-command launcher (fresh run or resume)
-├── requirements.txt   # Python dependencies
-└── outputs/           # Generated artefacts (checkpoints, learning_curves, results)
+├── drift_study/              # Library package (importable code)
+│   ├── config.py            # Centralised constants: datasets, models, drift grid, training, paths
+│   ├── data_loader.py       # Standardized loaders for CIFAR-10 / Tiny ImageNet (no augmentation)
+│   ├── models.py            # Model factory (ResNet-18 / DenseNet-121 / ShuffleNet V2) + penultimate-block Grad-CAM target layers
+│   ├── drift_utils.py       # Unified apply_drift(): noise / blur / brightness / rotation on tensor batches
+│   ├── xai_utils.py         # generate_heatmaps(): Grad-CAM & Grad-CAM++ for the predicted class
+│   ├── metrics.py           # Accuracy, SSIM/IoU/MSE/Pearson/cosine, image-level paired tests, effect sizes, bootstrap CIs, KS/AD/Welch/Wilcoxon
+│   ├── trainer.py           # Training loop w/ early stopping + best-epoch checkpoint + learning-curve plots
+│   └── evaluator.py         # Unified drift-sweep evaluation loop (the heart of the study)
+├── scripts/                  # Runnable entry points (run from the repo root)
+│   ├── run_experiments.py   # Orchestrator: nested dataset × model sweep, resumable, writes master CSV
+│   ├── make_heatmaps.py     # Regenerate the class-averaged Grad-CAM figures
+│   ├── generate_supplementary.py  # Render the supplementary LaTeX tables from the master CSV
+│   ├── profile_efficiency.py      # Profile runtime / peak GPU per model-dataset
+│   └── run_pipeline.ps1     # One-command launcher (fresh run or resume)
+├── requirements.txt          # Python dependencies
+└── outputs/                  # Generated artefacts (checkpoints, learning_curves, results)
 ```
 
 The codebase follows a strict **DRY** design: every constant lives in
-`config.py`, and a single evaluation loop iterates over all models, datasets and
-drift types without duplicating logic.
+`drift_study/config.py`, and a single evaluation loop iterates over all models,
+datasets and drift types without duplicating logic. All scripts are launched
+from the repository root (e.g. `python scripts/run_experiments.py`).
 
 ---
 
@@ -84,16 +90,16 @@ pip install -r requirements.txt
 
 ```powershell
 # Fresh run — clears ./outputs and trains + evaluates all 6 models:
-.\run_pipeline.ps1 -Fresh
+.\scripts\run_pipeline.ps1 -Fresh
 
 # Resume after an interruption (skips finished models, reuses checkpoints):
-.\run_pipeline.ps1
+.\scripts\run_pipeline.ps1
 ```
 
-Or directly:
+Or directly (from the repository root):
 
 ```powershell
-python main.py
+python scripts/run_experiments.py
 ```
 
 The run is **resumable**: each model's results are written to
